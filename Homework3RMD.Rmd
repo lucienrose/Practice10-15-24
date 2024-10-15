@@ -1,0 +1,139 @@
+---
+title: "Homework3RMD"
+author: "Lucien Rose"
+date: "2024-09-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r}
+setwd('/Users/Lucien/Documents/SDS313/Homework/Homework 3/')
+
+hw3tv <- read.csv('Homework3_tvSeries.csv')
+hw3r <- read.csv('Homework3_ratings.csv')
+hw3p <- read.csv('Homework3_principals.csv')
+
+options(max.print=100)
+
+library(tidyverse)
+library(kableExtra)
+```
+
+IMPORTANT NOTE: I set the max print to 100 for this homework because when I had no max print limit, the report just would not knit at all. I apologize if this makes things weird.
+
+## **Part 1 - IMDb Data Analysis**
+
+#### QUESTION 1: Create a tibble that contains all of the TV series that are no longer running (meaning they have an end year in the dataset). Create a new variable in this tibble that is how many years each series ran and display the distribution. How many TV series in this dataset ended the same year as they started?
+
+Creating the Tibble (only 50 entries are printed so I can knit)
+
+```{r}
+
+endyear<-filter(hw3tv,!is.na(endYear))
+
+kable_minimal(kbl(endyear[1:50,],caption = "Tibble for TV Series that are no longer running"),full_width = FALSE)
+```
+
+Creating the new variable for the amount of years each series ran.
+
+```{r}
+
+endyear2<-mutate(endyear,yearsran=endYear-startYear)
+```
+
+Displaying the distribution using a barplot.
+
+```{r}
+
+ggplot(endyear2,aes(x=yearsran))+
+  geom_bar(fill='red3')+
+  labs(title='Distribution of Years Ran', x='Years Ran',y='Count')
+```
+
+A total of `r nrow(filter(endyear2,yearsran==0))` TV series ended the same year they started.
+
+#### QUESTION 2: What proportion of the TV series have rating information? Find the TV series with a rating of 9 or higher with at least 20,000 votes and print the series names, sorted alphabetically
+
+```{r}
+
+sum(table(hw3r$tconst) > 1)
+sum(table(hw3tv$tconst) > 1)
+```
+
+Joining the hw3tv & hw3r datasets
+
+```{r}
+
+ratingstv <- left_join(hw3tv, hw3r, by ="tconst")
+```
+
+The proportion of TV series that have rating information is `r round(nrow(filter(ratingstv,!is.na(averageRating)))/nrow(ratingstv),3)`, meaning that around 35.8% of all TV series have rating information.
+
+Filtering TV series with \>20,000 votes or a rating \>9, and displaying the series names, sorted alphabetically.
+
+```{r}
+
+ratfilter<-filter(ratingstv,numVotes>=20000 & averageRating>=9)
+
+ratefilter<-arrange(ratfilter,primaryTitle)
+
+pull(ratefilter, var = 3)
+```
+
+#### QUESTION 3: Calculate the ages of the principal cast and crew when each TV series started.  Compare the median ages for each category of principals at the start of these TV series. *Note: the "self" category denotes people playing themselves, e.g. on reality TV shows.*
+
+Joining the hw3p & hw3tv datasets.
+
+```{r}
+
+characters<-left_join(hw3p,hw3tv,by="tconst")
+```
+
+Calculating the ages of the principal cast & crew at start year, and creating a new variable for it.
+
+```{r}
+
+characters<-mutate(characters,agestart=startYear-birthYear)
+```
+
+Grouping the different categories, and summarizing them.
+
+```{r}
+
+principals <- group_by(characters,category)
+
+summarize(principals, medianage = median(agestart,na.rm=TRUE))
+```
+
+## Part 2 - Project Reflection
+
+#### Why did you choose the dataset you used for this project? What about the context of the data interested you? Why did you choose the predictors you did, and what did you expect to find in their relationships with the outcome variable?
+
+To be honest, the only reason I chose the Super Bowl Advertisement dataset is because it had a connection to football (albeit a very weak connection). Football is my absolute favorite thing in the world, and is my main inspiration for just about everything.
+
+Here are the reasons I chose my predictor variables
+
+**Year** - I was interested to see if maybe the quality of the Super Bowl would affect people's impression of the advertisements (even though there would be no way to measure this with the data we were given). I thought that maybe boring Super Bowls like Super Bowl XLVIII or Super Bowl LIII, which audiences hated, would influence their opinions on the commercials going on during those games.
+
+**View Count** - I chose this because I expected to see a negative correlation between the amount of views and the reception of the ads. I figured that the more popular an ad was (or the more times people had to see it), the more likely people were going to be annoyed by it.
+
+**Funny** - I chose this because I expected to see a positive correlation.
+
+#### What challenges did you face while completing the assignment, and how did you overcome those challenges? What do you plan to do differently next time as a result?  List at least one specific thing you learned about yourself as a data science student as a result.
+
+Most of my challenges came from figuring out how to get all of my regression lines and mean lines on my ggplots to work the way I wanted to. I will admit I definitely had to look a lot of that up, but I definitely understand a lot of the code. Another part I was struggling with was the aesthetics, such as the axis labels, and how to tilt them.
+
+One thing I need to work on is not putting all of my code on a singular line, and that is something I plan to do differently in the future, especially with ggplots.
+
+I have learned that I am pretty good at recognizing patterns in data, and keeping myself interested in this kind of work. I genuinely have a lot of fun with this.
+
+#### Describe at least one way your personal background influenced how you analyzed this data or presented your analysis. What might someone else have done differently if analyzing the same dataset?
+
+Because all of my data experience comes from sports, the way I think is influenced heavily by sabermetrics. While football is my number 1 sport, I do love basketball and baseball as well. Baseball is like a perfect sport for me to mess around with because of how data-driven it is, meaning I have a lot of experienced just messing around with baseball data in excel. Because of this, I always try to focus on visualizing correlations using regressions and correlations wherever I can.
+
+I feel like at times though this can be a detriment as I will often try and force my data to show a pattern, even when there really isn't one. I just really hate when certain things can't be measured. Because of this I struggle with categorical data.
+
+I feel like someone else would have tried to focus more on the categorical variables, and used other types of graphs rather than just a bunch of scatterplots like I use.
