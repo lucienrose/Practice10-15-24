@@ -106,6 +106,8 @@ Grouping the different categories, and summarizing them.
 principals <- group_by(characters,category)
 
 summarize(principals, medianage = median(agestart,na.rm=TRUE))
+
+median(principals$agestart)
 ```
 
 ## Part 2 - Project Reflection
